@@ -3,11 +3,11 @@ import { ErrorHandler } from "../utils/error-handler.js";
 import { catchAsyncError } from "../middlewares/catchAsyncError.js";
 import moment from "moment";
 import User from "../models/userModel.js";
+import { calculateGradeForDateRange } from "../utils/calculateGrades.js";
 
 const markAttendance = catchAsyncError(async (req, res, next) => {
   const { status, leaveReason } = req.body;
   const userId = req.user._id;
-  console.log(userId);
 
   const today = moment().startOf("day");
 
@@ -84,8 +84,16 @@ const getUserAttendance = catchAsyncError(async (req, res, next) => {
     user: userId,
     date: { $gte: startDate, $lte: endDate },
   }).populate("user");
+  const { grade, presentDaysCount, totalDays } =
+    await calculateGradeForDateRange(userId, startDate, endDate);
 
-  res.status(200).json({ success: true, userAttendace: attendances });
+  res.status(200).json({
+    success: true,
+    userAttendace: attendances,
+    totalDays,
+    presentDaysCount,
+    grade,
+  });
 });
 
 export default {
