@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import errorMiddleware from "./middlewares/error-middleware.js";
 import userRoute from "./routes/userRoutes.js";
+import attendanceRoutes from "./routes/attendanceRoutes.js";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/user", userRoute);
+app.use("/api/attendance", attendanceRoutes);
 
 const server = app.listen(Port, () => {
   console.log(`Server running on port ${Port}`);

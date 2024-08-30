@@ -35,12 +35,3 @@ export const isAdmin = catchAsyncError(async (req, res, next) => {
     next();
   }
 });
-
-export const isProjectManger = catchAsyncError(async (req, res, next) => {
-  const { role } = req.user;
-  if (role !== "project_manager" && role !== "admin") {
-    return next(new ErrorHandler("You are not allowed to access this", 403));
-  } else {
-    next();
-  }
-});

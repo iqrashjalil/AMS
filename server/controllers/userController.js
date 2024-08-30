@@ -72,4 +72,9 @@ const updateUser = catchAsyncError(async (req, res, next) => {
 
   res.status(200).json({ success: true, updatedUser: user });
 });
-export default { register, login, logout, getUser, updateUser };
+
+const getAllUsers = catchAsyncError(async (req, res, next) => {
+  const users = await User.find();
+  res.status(200).json({ success: true, allUsers: users });
+});
+export default { register, login, logout, getUser, updateUser, getAllUsers };
