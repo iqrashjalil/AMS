@@ -196,6 +196,9 @@ const attendanceSlice = createSlice({
         state.loading = false;
         state.error = null;
         state.attendanceRecords = action.payload.allAttendances;
+        state.totalAbsent = action.payload.absents;
+        state.totalLeaves = action.payload.leaves;
+        state.totalPresent = action.payload.presents;
       })
       .addCase(getAllAttendance.rejected, (state, action) => {
         state.loading = false;

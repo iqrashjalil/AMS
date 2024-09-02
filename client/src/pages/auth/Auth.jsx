@@ -30,7 +30,7 @@ const Auth = () => {
       );
       dispatch(resetSuccess());
     }
-  }, [dispatch, error, navigate, success, user.role]);
+  }, [dispatch, error, navigate, success, user?.role]);
 
   const submitRegister = (e) => {
     e.preventDefault();

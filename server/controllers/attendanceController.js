@@ -45,11 +45,36 @@ const getAllAttendance = catchAsyncError(async (req, res, next) => {
         $lte: endDate,
       },
     }).populate("user");
+    const presents = attendances.filter(
+      (record) => record.status === "Present"
+    ).length;
+    const absents = attendances.filter(
+      (record) => record.status === "Absent"
+    ).length;
+    const leaves = attendances.filter(
+      (record) => record.status === "Leave"
+    ).length;
   } else {
     attendances = await Attendance.find().populate("user");
   }
-
-  res.status(200).json({ success: true, allAttendances: attendances });
+  const presents = attendances.filter(
+    (record) => record.status === "Present"
+  ).length;
+  const absents = attendances.filter(
+    (record) => record.status === "Absent"
+  ).length;
+  const leaves = attendances.filter(
+    (record) => record.status === "Leave"
+  ).length;
+  res
+    .status(200)
+    .json({
+      success: true,
+      allAttendances: attendances,
+      leaves,
+      presents,
+      absents,
+    });
 });
 
 const updateAttendance = catchAsyncError(async (req, res, next) => {

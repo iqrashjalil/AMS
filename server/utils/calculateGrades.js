@@ -33,7 +33,7 @@ export const calculateGradeForDateRange = async (
     grade = "B";
   } else if (presentPercentage >= 70) {
     grade = "C";
-  } else if (presentPercentage >= 60) {
+  } else if (presentPercentage >= 50) {
     grade = "D";
   } else {
     grade = "F";
