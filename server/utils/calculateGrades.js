@@ -1,5 +1,5 @@
 import moment from "moment";
-import Attendance from "../models/attendanceModel.js"; // Make sure to import your Attendance model
+import Attendance from "../models/attendanceModel.js";
 
 export const calculateGradeForDateRange = async (
   userId,
@@ -12,23 +12,20 @@ export const calculateGradeForDateRange = async (
     ? moment(endDate).endOf("day").toDate()
     : today;
 
-  // Fetch all attendance records for the user within the date range
   const attendanceRecords = await Attendance.find({
     user: userId,
     date: { $gte: start, $lte: end },
-    status: { $in: ["Present", "Absent"] }, // Consider only Present and Absent
+    status: { $in: ["Present", "Absent"] },
   });
 
   const presentDaysCount = attendanceRecords.filter(
     (record) => record.status === "Present"
   ).length;
 
-  const totalDays = attendanceRecords.length; // Only count days with attendance
+  const totalDays = attendanceRecords.length;
 
-  // Calculate the percentage of present days
   const presentPercentage = (presentDaysCount / totalDays) * 100;
 
-  // Assign grade based on the percentage of present days
   let grade;
   if (presentPercentage >= 90) {
     grade = "A";

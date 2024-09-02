@@ -2,11 +2,18 @@ import User from "../models/userModel.js";
 import { ErrorHandler } from "../utils/error-handler.js";
 import { catchAsyncError } from "../middlewares/catchAsyncError.js";
 import sendToken from "../utils/jwtToken.js";
+import { renameSync, unlinkSync } from "fs";
 
 const register = catchAsyncError(async (req, res, next) => {
-  const { name, email, password, role, profilePicture } = req.body;
+  const { name, email, password } = req.body;
+  if (!req.file) {
+    return next(new ErrorHandler("Please upload an image", 400));
+  }
+  const date = Date.now();
+  let fileName = "uploads/profiles/" + date + req.file.originalname;
 
-  if (!name || !email || !password || !role) {
+  renameSync(req.file.path, fileName);
+  if (!name || !email || !password) {
     return next(new ErrorHandler("Please Enter All Fields", 400));
   }
   const userExist = await User.findOne({ email });
@@ -17,8 +24,7 @@ const register = catchAsyncError(async (req, res, next) => {
     name,
     email,
     password,
-    role,
-    profilePicture,
+    profilePicture: fileName,
   });
 
   sendToken(user, 200, res);
@@ -45,7 +51,12 @@ const login = catchAsyncError(async (req, res, next) => {
 });
 
 const logout = catchAsyncError(async (req, res, next) => {
-  res.cookie("token", null, { expires: new Date(0) });
+  res.cookie("token", null, {
+    expires: new Date(0),
+    httpOnly: true,
+    secure: false,
+    sameSite: "Lax",
+  });
   res.status(200).json({ success: true, message: "Logged out successfully" });
 });
 
@@ -58,17 +69,29 @@ const getUser = catchAsyncError(async (req, res, next) => {
 });
 
 const updateUser = catchAsyncError(async (req, res, next) => {
-  const { name, email, profilePicture } = req.body;
+  const { name, email, password } = req.body;
+  console.log(req.body);
+  console.log(req.file); // Debugging: Check if req.file is defined
 
-  const user = await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      name,
-      email,
-      profilePicture,
-    },
-    { new: true }
-  );
+  // Find the user by ID
+  const user = await User.findById(req.user._id);
+
+  // Update the user's fields
+  if (name) user.name = name;
+  if (email) user.email = email;
+  if (password) user.password = password;
+
+  // Check if the user has uploaded a new profile picture
+  if (req.file) {
+    const date = Date.now();
+    const fileName = "uploads/profiles/" + date + req.file.originalname;
+
+    renameSync(req.file.path, fileName);
+    user.profilePicture = fileName; // Update the profile picture
+  }
+
+  // Save the updated user (this will trigger the `pre("save")` middleware)
+  await user.save();
 
   res.status(200).json({ success: true, updatedUser: user });
 });

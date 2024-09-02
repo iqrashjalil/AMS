@@ -9,8 +9,8 @@ router
   .post(authMiddleware, attendanceController.markAttendance);
 
 router
-  .route("/getallattendance/:id")
-  .get(authMiddleware, isAdmin, attendanceController.getAllAttendance);
+  .route("/getallattendance")
+  .post(authMiddleware, isAdmin, attendanceController.getAllAttendance);
 router
   .route("/updateattendance/:id")
   .patch(authMiddleware, isAdmin, attendanceController.updateAttendance);
@@ -19,5 +19,14 @@ router
   .delete(authMiddleware, isAdmin, attendanceController.deleteAttendance);
 router
   .route("/getuserattendance")
-  .get(authMiddleware, isAdmin, attendanceController.getUserAttendance);
+  .post(authMiddleware, isAdmin, attendanceController.getUserAttendance);
+router
+  .route("/getmyattendance")
+  .get(authMiddleware, attendanceController.getMyAttendance);
+router
+  .route("/isAttendanceMarked")
+  .get(authMiddleware, attendanceController.isAttendanceMarked);
+router
+  .route("/getattendancedetails/:id")
+  .get(authMiddleware, isAdmin, attendanceController.getAttendanceDetails);
 export default router;

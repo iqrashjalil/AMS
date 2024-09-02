@@ -33,16 +33,21 @@ const markAttendance = catchAsyncError(async (req, res, next) => {
 const getAllAttendance = catchAsyncError(async (req, res, next) => {
   const { from, to } = req.body;
 
-  const startDate = moment(from).startOf("day").toDate();
-  const endDate = moment(to).endOf("day").toDate();
+  let attendances;
 
-  // Find attendances between 'from' and 'to' dates
-  const attendances = await Attendance.find({
-    date: {
-      $gte: startDate,
-      $lte: endDate,
-    },
-  }).populate("user");
+  if (from && to) {
+    const startDate = moment(from).startOf("day").toDate();
+    const endDate = moment(to).endOf("day").toDate();
+
+    attendances = await Attendance.find({
+      date: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    }).populate("user");
+  } else {
+    attendances = await Attendance.find().populate("user");
+  }
 
   res.status(200).json({ success: true, allAttendances: attendances });
 });
@@ -74,32 +79,112 @@ const deleteAttendance = catchAsyncError(async (req, res, next) => {
 
 const getUserAttendance = catchAsyncError(async (req, res, next) => {
   const { userId, from, to } = req.body;
-  if (!userId || !from || !to) {
-    return next(new ErrorHandler("Please Enter All Fields", 400));
+  let attendances;
+  let grade = null;
+
+  if (from && to) {
+    const startDate = moment(from).startOf("day").toDate();
+    const endDate = moment(to).endOf("day").toDate();
+
+    attendances = await Attendance.find({
+      user: userId,
+      date: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    }).populate("user");
+
+    const result = await calculateGradeForDateRange(userId, startDate, endDate);
+
+    grade = result.grade;
+  } else {
+    attendances = await Attendance.find({ user: userId }).populate("user");
   }
-  const startDate = moment(from).startOf("day").toDate();
-  const endDate = moment(to).endOf("day").toDate();
-
-  const attendances = await Attendance.find({
-    user: userId,
-    date: { $gte: startDate, $lte: endDate },
-  }).populate("user");
-  const { grade, presentDaysCount, totalDays } =
-    await calculateGradeForDateRange(userId, startDate, endDate);
-
+  const presents = attendances.filter(
+    (record) => record.status === "Present"
+  ).length;
+  const absents = attendances.filter(
+    (record) => record.status === "Absent"
+  ).length;
+  const leaves = attendances.filter(
+    (record) => record.status === "Leave"
+  ).length;
+  const totalDays = attendances.length;
   res.status(200).json({
     success: true,
-    userAttendace: attendances,
+    userAttendance: attendances,
+    absents,
     totalDays,
-    presentDaysCount,
     grade,
+    leaves,
+    presents,
   });
 });
 
+const getMyAttendance = catchAsyncError(async (req, res, next) => {
+  const userId = req.user._id;
+  const attendances = await Attendance.find({ user: userId });
+  const presents = attendances.filter(
+    (record) => record.status === "Present"
+  ).length;
+  const absents = attendances.filter(
+    (record) => record.status === "Absent"
+  ).length;
+  const leaves = attendances.filter(
+    (record) => record.status === "Leave"
+  ).length;
+
+  res.status(200).json({
+    success: true,
+    myAttendances: attendances,
+    presents: presents,
+    absents: absents,
+    leaves: leaves,
+  });
+});
+const isAttendanceMarked = catchAsyncError(async (req, res, next) => {
+  const userId = req.user._id;
+
+  const todayStart = moment().startOf("day").toDate();
+  const todayEnd = moment().endOf("day").toDate();
+
+  const attendanceRecord = await Attendance.findOne({
+    user: userId,
+    date: { $gte: todayStart, $lte: todayEnd },
+  });
+
+  if (attendanceRecord) {
+    return res.status(200).json({
+      success: true,
+      message: "Attendance has been marked for today.",
+      attendance: attendanceRecord,
+    });
+  } else {
+    return res.status(200).json({
+      success: true,
+      message: "Attendance has not been marked for today.",
+    });
+  }
+});
+
+// Get Attendance Controller
+
+export const getAttendanceDetails = catchAsyncError(async (req, res, next) => {
+  const attendanceId = req.params.id;
+  const attendance = await Attendance.findById(attendanceId);
+  if (!attendance) {
+    return next(new ErrorHandler("Attendance not found", 404));
+  }
+
+  res.status(200).json({ success: true, attendanceDetailsData: attendance });
+});
 export default {
   markAttendance,
   getAllAttendance,
   updateAttendance,
   deleteAttendance,
   getUserAttendance,
+  getMyAttendance,
+  isAttendanceMarked,
+  getAttendanceDetails,
 };

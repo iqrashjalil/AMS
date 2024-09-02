@@ -12,6 +12,16 @@ const app = express();
 
 const Port = process.env.PORT || 3000;
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true,
+  })
+);
+
+app.use("/uploads/profiles", express.static("uploads/profiles"));
+
 app.use(cookieParser());
 app.use(express.json());
 
